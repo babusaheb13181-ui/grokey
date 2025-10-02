@@ -1,347 +1,235 @@
-// Sample data
-let books = [
-    {
-        id: 1,
-        title: "The Great Gatsby",
-        author: "F. Scott Fitzgerald",
-        category: "Fiction",
-        price: 12.99,
-        condition: "Good",
-        description: "Classic American novel",
-        owner: "demo",
-        dateAdded: new Date()
-    },
-    {
-        id: 2,
-        title: "Introduction to Algorithms",
-        author: "Thomas H. Cormen",
-        category: "Academic",
-        price: 89.99,
-        condition: "Like New",
-        description: "Computer science textbook",
-        owner: "other",
-        dateAdded: new Date(Date.now() - 86400000)
-    },
-    {
-        id: 3,
-        title: "Harry Potter and the Sorcerer's Stone",
-        author: "J.K. Rowling",
-        category: "Children",
-        price: 8.99,
-        condition: "Good",
-        description: "First book in the series",
-        owner: "other",
-        dateAdded: new Date(Date.now() - 172800000)
-    }
-];
-
-// AI Book Database for recognition
-const aiBookDatabase = [
-    { title: "To Kill a Mockingbird", author: "Harper Lee", category: "Fiction", price: 14.99 },
-    { title: "1984", author: "George Orwell", category: "Fiction", price: 13.99 },
-    { title: "The Catcher in the Rye", author: "J.D. Salinger", category: "Fiction", price: 12.99 },
-    { title: "Pride and Prejudice", author: "Jane Austen", category: "Romance", price: 11.99 },
-    { title: "The Lord of the Rings", author: "J.R.R. Tolkien", category: "Fiction", price: 24.99 },
-    { title: "Calculus: Early Transcendentals", author: "James Stewart", category: "Academic", price: 299.99 },
-    { title: "The Very Hungry Caterpillar", author: "Eric Carle", category: "Children", price: 8.99 },
-    { title: "Gone Girl", author: "Gillian Flynn", category: "Mystery", price: 15.99 }
-];
-
+// Global variables
+let isLoginMode = true;
 let currentUser = null;
-let currentSection = 'home';
-let isScanning = false;
+let orders = [];
+let users = [];
+let books = [];
 
-// AI Scanning Functions
-function startScanning() {
-    if (isScanning) return;
-    
-    isScanning = true;
-    document.getElementById('aiScanner').classList.add('hidden');
-    document.getElementById('cameraView').classList.remove('hidden');
-    
-    // Simulate camera scanning process
-    let scanStep = 0;
-    const scanSteps = [
-        { icon: '📷', text: 'Initializing camera...' },
-        { icon: '🔍', text: 'Detecting book cover...' },
-        { icon: '🤖', text: 'AI analyzing image...' },
-        { icon: '✅', text: 'Book recognized!' }
+// Initialize sample data
+function initializeData() {
+    // Sample orders
+    orders = [
+        { id: 'ORD001', customer: 'John Doe', book: 'JavaScript Mastery', amount: 29.99, status: 'completed', date: '2024-01-15' },
+        { id: 'ORD002', customer: 'Jane Smith', book: 'Python Programming', amount: 34.99, status: 'processing', date: '2024-01-16' },
+        { id: 'ORD003', customer: 'Mike Johnson', book: 'Web Development', amount: 39.99, status: 'pending', date: '2024-01-17' },
+        { id: 'ORD004', customer: 'Sarah Wilson', book: 'Data Science Guide', amount: 44.99, status: 'completed', date: '2024-01-18' }
     ];
+
+    // Sample users
+    users = [
+        { id: 'USR001', name: 'John Doe', email: 'john@example.com', joinDate: '2023-12-01', orders: 3 },
+        { id: 'USR002', name: 'Jane Smith', email: 'jane@example.com', joinDate: '2023-12-15', orders: 2 },
+        { id: 'USR003', name: 'Mike Johnson', email: 'mike@example.com', joinDate: '2024-01-01', orders: 1 },
+        { id: 'USR004', name: 'Sarah Wilson', email: 'sarah@example.com', joinDate: '2024-01-10', orders: 4 }
+    ];
+
+    // Sample books
+    books = [
+        { id: 'BK001', title: 'JavaScript Mastery', author: 'Alex Johnson', category: 'Technology', price: 29.99, stock: 50 },
+        { id: 'BK002', title: 'Python Programming', author: 'Maria Garcia', category: 'Technology', price: 34.99, stock: 35 },
+        { id: 'BK003', title: 'Web Development', author: 'David Chen', category: 'Technology', price: 39.99, stock: 42 },
+        { id: 'BK004', title: 'Data Science Guide', author: 'Lisa Brown', category: 'Science', price: 44.99, stock: 28 }
+    ];
+
+    updateDashboard();
+}
+
+// Authentication functions
+document.getElementById('authForm').addEventListener('submit', function(e) {
+    e.preventDefault();
     
-    const scanInterval = setInterval(() => {
-        if (scanStep < scanSteps.length) {
-            document.getElementById('scanningIcon').textContent = scanSteps[scanStep].icon;
-            document.getElementById('scanningText').textContent = scanSteps[scanStep].text;
-            scanStep++;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const fullName = document.getElementById('fullName').value;
+
+    if (isLoginMode) {
+        // Check specific login credentials
+        if (email === 'kumarkaushik663@gmail.com' && password === 'kaushik13181181181') {
+            currentUser = { email: email, name: 'Kaushik Kumar' };
+            showDashboard();
         } else {
-            clearInterval(scanInterval);
-            completeScanning();
+            alert('Invalid email or password. Please check your credentials and try again.');
         }
-    }, 800);
-}
-
-function completeScanning() {
-    // Randomly select a book from AI database
-    const recognizedBook = aiBookDatabase[Math.floor(Math.random() * aiBookDatabase.length)];
-    
-    // Fill form with recognized data
-    document.getElementById('bookTitle').value = recognizedBook.title;
-    document.getElementById('bookAuthor').value = recognizedBook.author;
-    document.getElementById('bookCategory').value = recognizedBook.category;
-    document.getElementById('bookPrice').value = recognizedBook.price;
-    
-    // Hide camera and show form
-    stopScanning();
-    showNotification(`📚 Book recognized: "${recognizedBook.title}"!`);
-}
-
-function stopScanning() {
-    isScanning = false;
-    document.getElementById('cameraView').classList.add('hidden');
-    document.getElementById('aiScanner').classList.remove('hidden');
-}
-
-// Show different sections
-function showSection(section) {
-    // Hide all sections
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    
-    // Remove active class from all nav buttons
-    document.querySelectorAll('nav button').forEach(btn => {
-        btn.classList.remove('bottom-nav-active');
-        if (!btn.id.includes('sell')) {
-            btn.classList.remove('bg-blue-600', 'text-white');
-            btn.classList.add('text-gray-500');
+    } else {
+        // Simple signup validation
+        if (email && password && fullName) {
+            currentUser = { email: email, name: fullName };
+            showDashboard();
         }
-    });
-    
-    // Show selected section
-    document.getElementById(`${section}-section`).classList.remove('hidden');
-    
-    // Update nav button
-    const navBtn = document.getElementById(`nav-${section}`);
-    if (navBtn && !navBtn.id.includes('sell')) {
-        navBtn.classList.add('bottom-nav-active');
     }
+});
+
+document.getElementById('authToggle').addEventListener('click', function() {
+    isLoginMode = !isLoginMode;
     
-    // Update header
-    const subtitles = {
-        'home': 'Welcome back!',
-        'mybooks': 'Your listed books',
-        'sell': 'List a new book',
-        'newbooks': 'Latest additions',
-        'account': 'Manage your profile'
-    };
-    document.getElementById('headerSubtitle').textContent = subtitles[section];
-    
-    currentSection = section;
-    
-    // Load section-specific content
-    if (section === 'home') {
-        renderFeaturedBooks();
-        updateStats();
-    } else if (section === 'mybooks') {
-        renderMyBooks();
-    } else if (section === 'newbooks') {
-        renderNewBooks();
-    } else if (section === 'account') {
-        updateAccountStats();
+    if (isLoginMode) {
+        document.getElementById('authTitle').textContent = 'GROKEY ADMIN Login';
+        document.getElementById('authSubmit').textContent = 'Login';
+        document.getElementById('authToggle').textContent = "Don't have an account? Sign up here";
+        document.getElementById('nameGroup').classList.add('hidden');
+    } else {
+        document.getElementById('authTitle').textContent = 'GROKEY ADMIN Signup';
+        document.getElementById('authSubmit').textContent = 'Sign Up';
+        document.getElementById('authToggle').textContent = 'Already have an account? Login here';
+        document.getElementById('nameGroup').classList.remove('hidden');
     }
+});
+
+function showDashboard() {
+    document.getElementById('authContainer').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('welcomeUser').textContent = `Welcome, ${currentUser.name}!`;
+    initializeData();
 }
 
-// Render featured books
-function renderFeaturedBooks() {
-    const container = document.getElementById('featuredBooks');
-    const featured = books.slice(0, 3);
-    
-    container.innerHTML = featured.map(book => `
-        <div class="bg-white p-4 rounded-2xl shadow-sm">
-            <div class="flex justify-between items-start mb-2">
-                <h4 class="font-semibold text-gray-800">${book.title}</h4>
-                <span class="text-lg font-bold text-green-600">$${book.price}</span>
-            </div>
-            <p class="text-sm text-gray-600 mb-2">by ${book.author}</p>
-            <div class="flex justify-between items-center">
-                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${book.category}</span>
-                <button onclick="buyBook(${book.id})" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-    `).join('');
+function logout() {
+    currentUser = null;
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('authContainer').classList.remove('hidden');
+    document.getElementById('authForm').reset();
 }
 
-// Render user's books
-function renderMyBooks() {
-    const container = document.getElementById('myBooksList');
-    const myBooks = books.filter(book => book.owner === 'demo');
+// Tab navigation
+function showTab(tabName) {
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
     
-    if (myBooks.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8">
-                <div class="text-4xl mb-4">📚</div>
-                <p class="text-gray-600 mb-4">You haven't listed any books yet</p>
-                <button onclick="showSection('sell')" class="bg-blue-600 text-white px-6 py-3 rounded-xl">
-                    List Your First Book
-                </button>
-            </div>
+    // Remove active class from all buttons
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+// Update dashboard statistics
+function updateDashboard() {
+    document.getElementById('totalOrders').textContent = orders.length;
+    document.getElementById('totalUsers').textContent = users.length;
+    document.getElementById('totalBooks').textContent = books.length;
+    
+    const totalRevenue = orders.reduce((sum, order) => sum + order.amount, 0);
+    document.getElementById('totalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+    
+    populateOrdersTable();
+    populateUsersTable();
+    populateBooksTable();
+}
+
+// Populate orders table
+function populateOrdersTable() {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = '';
+    
+    orders.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${order.id}</td>
+            <td>${order.customer}</td>
+            <td>${order.book}</td>
+            <td>$${order.amount.toFixed(2)}</td>
+            <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+            <td>${order.date}</td>
         `;
-        return;
-    }
-    
-    container.innerHTML = myBooks.map(book => `
-        <div class="bg-white p-4 rounded-2xl shadow-sm">
-            <div class="flex justify-between items-start mb-2">
-                <h4 class="font-semibold text-gray-800">${book.title}</h4>
-                <span class="text-lg font-bold text-green-600">$${book.price}</span>
-            </div>
-            <p class="text-sm text-gray-600 mb-2">by ${book.author}</p>
-            <div class="flex justify-between items-center">
-                <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">${book.condition}</span>
-                <button onclick="removeBook(${book.id})" class="text-red-600 text-sm hover:text-red-800">
-                    Remove
-                </button>
-            </div>
-        </div>
-    `).join('');
+        tbody.appendChild(row);
+    });
 }
 
-// Render new books
-function renderNewBooks() {
-    const container = document.getElementById('newBooksList');
-    const sortedBooks = [...books].sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+// Populate users table
+function populateUsersTable() {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '';
     
-    container.innerHTML = sortedBooks.map(book => `
-        <div class="bg-white p-4 rounded-2xl shadow-sm">
-            <div class="flex justify-between items-start mb-2">
-                <h4 class="font-semibold text-gray-800">${book.title}</h4>
-                <span class="text-lg font-bold text-green-600">$${book.price}</span>
-            </div>
-            <p class="text-sm text-gray-600 mb-2">by ${book.author}</p>
-            <p class="text-xs text-gray-500 mb-3">${book.description}</p>
-            <div class="flex justify-between items-center">
-                <div class="flex gap-2">
-                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${book.category}</span>
-                    <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">${book.condition}</span>
-                </div>
-                <button onclick="buyBook(${book.id})" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-    `).join('');
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.joinDate}</td>
+            <td>${user.orders}</td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
-// Handle sell book form
-document.getElementById('sellBookForm').addEventListener('submit', function(e) {
+// Populate books table
+function populateBooksTable() {
+    const tbody = document.getElementById('booksTableBody');
+    tbody.innerHTML = '';
+    
+    books.forEach(book => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${book.id}</td>
+            <td>${book.title}</td>
+            <td>${book.author}</td>
+            <td>${book.category}</td>
+            <td>$${book.price.toFixed(2)}</td>
+            <td>${book.stock}</td>
+            <td>
+                <button onclick="editBook('${book.id}')" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-right: 5px;">Edit</button>
+                <button onclick="deleteBook('${book.id}')" style="background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Book management functions
+function showAddBookForm() {
+    document.getElementById('addBookForm').classList.remove('hidden');
+}
+
+function hideAddBookForm() {
+    document.getElementById('addBookForm').classList.add('hidden');
+    document.getElementById('bookForm').reset();
+}
+
+document.getElementById('bookForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const newBook = {
-        id: Date.now(),
+        id: 'BK' + String(books.length + 1).padStart(3, '0'),
         title: document.getElementById('bookTitle').value,
         author: document.getElementById('bookAuthor').value,
         category: document.getElementById('bookCategory').value,
         price: parseFloat(document.getElementById('bookPrice').value),
-        condition: document.getElementById('bookCondition').value,
-        description: document.getElementById('bookDescription').value || 'No description provided',
-        owner: 'demo',
-        dateAdded: new Date()
+        stock: Math.floor(Math.random() * 50) + 10 // Random stock between 10-60
     };
     
     books.push(newBook);
-    this.reset();
+    updateDashboard();
+    hideAddBookForm();
     
-    showNotification('Book listed successfully! 📚');
-    updateStats();
+    alert('Book added successfully!');
 });
 
-// Buy book function
-function buyBook(id) {
-    const book = books.find(b => b.id === id);
+function editBook(bookId) {
+    const book = books.find(b => b.id === bookId);
     if (book) {
-        showNotification(`Successfully purchased "${book.title}"! 🎉`);
+        const newTitle = prompt('Enter new title:', book.title);
+        const newAuthor = prompt('Enter new author:', book.author);
+        const newPrice = prompt('Enter new price:', book.price);
+        
+        if (newTitle && newAuthor && newPrice) {
+            book.title = newTitle;
+            book.author = newAuthor;
+            book.price = parseFloat(newPrice);
+            updateDashboard();
+            alert('Book updated successfully!');
+        }
     }
 }
 
-// Remove book function
-function removeBook(id) {
-    books = books.filter(book => book.id !== id);
-    renderMyBooks();
-    updateStats();
-    showNotification('Book removed successfully');
-}
-
-// Filter books
-function filterBooks() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const filteredBooks = books.filter(book => 
-        book.title.toLowerCase().includes(searchTerm) || 
-        book.author.toLowerCase().includes(searchTerm)
-    );
-    
-    const container = document.getElementById('newBooksList');
-    container.innerHTML = filteredBooks.map(book => `
-        <div class="bg-white p-4 rounded-2xl shadow-sm">
-            <div class="flex justify-between items-start mb-2">
-                <h4 class="font-semibold text-gray-800">${book.title}</h4>
-                <span class="text-lg font-bold text-green-600">$${book.price}</span>
-            </div>
-            <p class="text-sm text-gray-600 mb-2">by ${book.author}</p>
-            <p class="text-xs text-gray-500 mb-3">${book.description}</p>
-            <div class="flex justify-between items-center">
-                <div class="flex gap-2">
-                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${book.category}</span>
-                    <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">${book.condition}</span>
-                </div>
-                <button onclick="buyBook(${book.id})" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Update stats
-function updateStats() {
-    document.getElementById('totalBooks').textContent = books.length;
-    document.getElementById('myBooksCount').textContent = books.filter(b => b.owner === 'demo').length;
-}
-
-// Update account stats
-function updateAccountStats() {
-    const myBooks = books.filter(b => b.owner === 'demo');
-    document.getElementById('accountBooksListed').textContent = myBooks.length;
-    document.getElementById('accountBooksSold').textContent = Math.floor(myBooks.length * 0.3); // Simulate some sales
-}
-
-// Show notification
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    const text = document.getElementById('notificationText');
-    
-    text.textContent = message;
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-xl shadow-lg z-50 ${
-        type === 'error' ? 'bg-red-500' : 'bg-green-500'
-    } text-white`;
-    
-    notification.classList.remove('hidden');
-    
-    setTimeout(() => {
-        notification.classList.add('hidden');
-    }, 3000);
-}
-
-// Initialize app
-document.addEventListener('DOMContentLoaded', function() {
-    // Show main app immediately (no login required)
-    document.getElementById('mainApp').classList.remove('hidden');
-    showSection('home');
-    updateStats();
-});
-
-// Search on enter
-document.getElementById('searchInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        filterBooks();
+function deleteBook(bookId) {
+    if (confirm('Are you sure you want to delete this book?')) {
+        books = books.filter(book => book.id !== bookId);
+        updateDashboard();
+        alert('Book deleted successfully!');
     }
-});
+}
